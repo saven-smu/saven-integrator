@@ -1,4 +1,4 @@
-from statements import test
+from utils.statements import test
 from prefect import flow, task, get_run_logger
 from prefect.blocks.system import Secret
 from sqlalchemy import create_engine
@@ -8,14 +8,24 @@ from pandas import read_sql
 def test_db():
     try:
         logger = get_run_logger()
-        pg_engine = create_engine(Secret.load("saven-rds").get())
-        conn = pg_engine.connect()
+
+        # Create engine
+        rds_engine = create_engine(Secret.load("saven-rds").get())
+        conn = rds_engine.connect()
+
+        # Execute test SQL statement
         df = read_sql(sql=test["test_conn"], con=conn)
 
-        logger.info("Connection from RDS Successful")
-        logger.info(df.head())
+        # Check if df is returned
+        if df.size > 0 :
+            logger.info("Connection to RDS Successful")
+        else:
+            logger.error("Connection to RDS Failed")
+            raise ValueError()
+
     except Exception as e:
         logger.error("Data extract error: " + str(e))
+        raise ValueError()
     finally:
         if conn:
             conn.close()
