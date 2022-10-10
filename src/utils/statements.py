@@ -1,6 +1,7 @@
 users = {
     "get_users": """
-        SELECT * FROM USERS;
+        SELECT  id, housing_type, household_members
+        FROM USERS;
     """
 }
 
