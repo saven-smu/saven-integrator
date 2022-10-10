@@ -1,5 +1,5 @@
 from utils.statements import users
-from utils.bill_formula import calc_bill, calc_usage
+from utils.bill_formula import calc_usage
 
 from prefect import flow, task, get_run_logger
 from prefect.blocks.system import Secret
@@ -41,9 +41,9 @@ def process_bills(df):
         df["water_used"] = df.apply(lambda row: calc_usage(row, 3), axis=1)
 
         # Process cost data
-        df["electricity_cost"] = df.apply(lambda row: calc_bill(row, 1), axis=1)
-        df["gas_cost"] = df.apply(lambda row: calc_bill(row, 2), axis=1)
-        df["water_cost"] = df.apply(lambda row: calc_bill(row, 3), axis=1)
+        df["electricity_cost"] = (df["electricity_used"] * 2.2).astype('int')
+        df["gas_cost"] = (df["gas_used"] * 2).astype('int')
+        df["water_cost"] = (df["water_used"] * 0.025).astype('int')
         df["total_cost"] = df["electricity_cost"] + df["gas_cost"] + df["water_cost"]
 
         # Process date

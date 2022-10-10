@@ -7,13 +7,6 @@ usage_dict = {
     3: 6250 # CuCM: Divide 1000000 (10**6) -> CuM
 }
 
-# Cost dict
-cost_dict = {
-    1: 1045, # Divide 10000 (10**4) -> Dollars
-    2: 333, # Divide 10000 (10**4) -> Dollars
-    3: 145, # Divide 10000 (10**4) -> Dollars
-}
-
 # Range of housing type multiplier
 htm_dict = {
     "hdb1": (0.35, 0.5),
@@ -57,9 +50,4 @@ def ab_multiplier():
 # Calculate usage
 def calc_usage(row, type):
     base = usage_dict[type]
-    return int(base * ht_multiplier(row['housing_type']) * hm_multiplier(row['household_members']) * ab_multiplier())
-
-# Calculate bill
-def calc_bill(row, type):
-    base = cost_dict[type]
     return int(base * ht_multiplier(row['housing_type']) * hm_multiplier(row['household_members']) * ab_multiplier())
