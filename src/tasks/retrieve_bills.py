@@ -47,7 +47,7 @@ def process_bills(df):
         df["total_cost"] = df["electricity_cost"] + df["gas_cost"] + df["water_cost"]
 
         # Process date
-        current_datetime = datetime.utcnow()
+        current_datetime = datetime.now()
         prev_hour = current_datetime.replace(microsecond=0, second=0, minute=0) - timedelta(hours=1)
 
         df["stored_date_time"] = prev_hour

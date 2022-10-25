@@ -25,7 +25,7 @@ test = {
 }
 
 def date_range(type):
-    tdy = datetime.utcnow().replace(microsecond=0, second=0, minute=0, hour=0)
+    tdy = datetime.now().replace(microsecond=0, second=0, minute=0, hour=0)
     prev = None;
     if type == 1:
         prev = tdy - timedelta(days=1)
