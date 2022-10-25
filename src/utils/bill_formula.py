@@ -30,6 +30,34 @@ abm_dict = {
     4: (1, 1),
 }
 
+# Range of hourly multiplier
+hour_dict = {
+    0: 0.25,
+    1: 0.1,
+    2: 0.05,
+    3: 0.05,
+    4: 0.1,
+    5: 0.25,
+    6: 0.85,
+    7: 1,
+    8: 1.1,
+    9: 1,
+    10: 0.85,
+    11: 0.8,
+    12: 0.75,
+    13: 0.7,
+    14: 0.65,
+    15: 0.5,
+    16: 0.65,
+    17: 0.75,
+    18: 0.85,
+    19: 1,
+    20: 1.1,
+    21: 1.1,
+    22: 1,
+    23: 0.65,
+}
+
 # Housing type Multiplier
 def ht_multiplier(housing_type):
     multi_rg = htm_dict[housing_type.lower()]

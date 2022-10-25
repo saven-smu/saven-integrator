@@ -1,5 +1,5 @@
 from utils.statements import users
-from utils.bill_formula import calc_usage
+from utils.bill_formula import calc_usage, hour_dict
 
 from prefect import flow, task, get_run_logger
 from prefect.blocks.system import Secret
@@ -35,10 +35,11 @@ def process_bills(df):
         df.rename(columns={ 'id':'user_id'}, inplace=True)
         df["id"] = [uuid.uuid4() for _ in range(len(df.index))]
 
-        # Process usage data
-        df["electricity_used"] = df.apply(lambda row: calc_usage(row, 1), axis=1)
-        df["gas_used"] = df.apply(lambda row: calc_usage(row, 2), axis=1)
-        df["water_used"] = df.apply(lambda row: calc_usage(row, 3), axis=1)
+        # Process usage data with hourly multiplier
+        hm = hour_dict[datetime.now().hour]
+        df["electricity_used"] = df.apply(lambda row: calc_usage(row, 1) * hm, axis=1)
+        df["gas_used"] = df.apply(lambda row: calc_usage(row, 2) * hm, axis=1)
+        df["water_used"] = df.apply(lambda row: calc_usage(row, 3) * hm, axis=1)
 
         # Process cost data
         df["electricity_cost"] = (df["electricity_used"] * 2.2).astype('int')
@@ -95,8 +96,6 @@ def retrieve_bills():
     proc_df = process_bills(df)
     # Load bills into database
     load_bills(proc_df)
-
-
 
 if __name__ == "__main__":
     retrieve_bills()
