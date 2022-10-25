@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 users = {
     "get_users": """
-        SELECT  id, housing_type, household_members
+        SELECT id as user_id, housing_type, household_members
         FROM USERS;
     """
 }

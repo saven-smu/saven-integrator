@@ -32,7 +32,6 @@ def process_bills(df):
         logger = get_run_logger()
 
         # Generate and rename id
-        df.rename(columns={ 'id':'user_id'}, inplace=True)
         df["id"] = [uuid.uuid4() for _ in range(len(df.index))]
 
         # Process usage data with hourly multiplier
