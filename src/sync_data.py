@@ -1,5 +1,5 @@
 from tasks.retrieve_bills import extract_users, process_bills, load_bills
-from tasks.compute_leaderboard import extract_bills, process_leaderboard
+from tasks.compute_leaderboard import extract_bills, process_leaderboard, process_userleaderboard
 
 from prefect import flow
 
@@ -19,7 +19,7 @@ def compute_leaderboard(time_window):
     # Process bills for given user
     lb_res = process_leaderboard(time_window, bill_res[1])
     # Load bills into database
-    ulb_df = process_userleaderboard(bill_res[0], lb_res[1])
+    # ulb_df = process_userleaderboard(bill_res[0], lb_res[1])
 
 if __name__ == "__main__":
     # Test Flows
