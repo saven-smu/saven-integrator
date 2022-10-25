@@ -1,0 +1,5 @@
+.env
+**/__pycache__
+*deployment.yaml
+README.md
+Dockerfile
