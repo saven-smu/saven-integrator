@@ -12,5 +12,17 @@ def retrieve_bills():
     # Load bills into database
     load_bills(proc_df)
 
+@flow(name="Compute Leaderboard")
+def compute_leaderboard(type):
+    # Extract bills from database
+    df = extract_bills(type)
+    # Process bills for given user
+    # proc_df = process_bills(df)
+    # Load bills into database
+    # load_bills(proc_df)
+
 if __name__ == "__main__":
-    retrieve_bills()
+    # Test Flows
+    # retrieve_bills()
+    compute_leaderboard(1)
+    pass
