@@ -6,4 +6,4 @@ RUN pip install sqlalchemy pandas psycopg2-binary
 WORKDIR /app
 COPY . /app/
 
-ENTRYPOINT [ "prefect", "agent", "start", "-q", "etl" ]
+ENTRYPOINT [ "prefect", "agent", "start", "-q", "saven-etl", "-q", "saven-test" ]
