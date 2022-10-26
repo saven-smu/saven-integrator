@@ -1,11 +1,11 @@
 from utils.statements import bills, date_range
-from utils.compute_score import htd_dict
+from utils.compute_score import htd_dict, proc_df, reverse_mm_normalize
 
 from prefect import task, get_run_logger
 from prefect.blocks.system import Secret
 from sqlalchemy import create_engine
-from pandas import read_sql, DataFrame
-from datetime import datetime, timedelta
+from pandas import read_sql, DataFrame, concat
+from datetime import datetime, timezone, timedelta
 import uuid
 
 
@@ -22,7 +22,6 @@ def extract_bills(type):
         df = read_sql(sql=model, con=conn)
 
         logger.info(f"Extracted User DF {df.shape}:" )
-        logger.info(df.head())
         return (df, date_tup[0])
 
     except Exception as e:
@@ -46,10 +45,10 @@ def process_leaderboard(tw, sdt):
 
         # Insert stored_date_time and time_window
         df["time_window"] = tw
-        df["stored_date_time"] = sdt
+        df["stored_date_time"] = sdt.replace(tzinfo=timezone(timedelta(hours=8)))
 
         # Process date
-        current_datetime = datetime.now()
+        current_datetime = datetime.now().replace(tzinfo=timezone(timedelta(hours=8)))
         df["date_created"] = current_datetime
         df["last_updated"] = current_datetime
 
@@ -68,36 +67,58 @@ def process_userleaderboard(df, ids):
         logger = get_run_logger()
 
         # Balance usage
-        df['balancer'] = df.apply(lambda row: htd_dict[row['housing_type']] / row['household_members'], axis=1)
+        df['balancer'] = df.apply(lambda row: htd_dict[row['housing_type'].lower()] / row['household_members'], axis=1)
         df['bal_electric'] = df['balancer'] * df['total_electric']
         df['bal_water'] = df['balancer'] * df['total_water']
         df['bal_gas'] = df['balancer'] * df['total_gas']
 
-        # Reverse Normalize cols
-        df['norm_electric'] = (1 - (df['bal_electric']-df['bal_electric'].mean())/df['bal_electric'].std())
-        df['norm_water'] = (1 - (df['bal_water']-df['bal_water'].mean())/df['bal_water'].std())
-        df['norm_gas'] = (1 - (df['bal_gas']-df['bal_gas'].mean())/df['bal_gas'].std())
+        # Reverse MinMax Normalization on cols
+        df['norm_electric'] = reverse_mm_normalize(df['bal_electric'])
+        df['norm_water'] = reverse_mm_normalize(df['bal_water'])
+        df['norm_gas'] = reverse_mm_normalize(df['bal_gas'])
         df['norm_total'] = (df['norm_electric']+df['norm_water']+df['norm_gas'])/3
 
         # Splitting df and Scoring df
-        electric_df = proc_df(df[['user_id', 'norm_electric']].copy().rename(columns={ 'norm_electric':'norm_usage'}, inplace=True), ids[0])
-        water_df = proc_df(df[['user_id', 'norm_water']].copy().rename(columns={ 'norm_water':'norm_usage'}, inplace=True), ids[1])
-        gas_df = proc_df(df[['user_id', 'norm_gas']].copy().rename(columns={ 'norm_gas':'norm_usage'}, inplace=True), ids[2])
-        total_df = proc_df(df[['user_id', 'norm_total']].copy().rename(columns={ 'norm_total':'norm_usage'}, inplace=True), ids[3])
-        
+        electric_df = proc_df(df[['user_id', 'norm_electric']].copy().rename(columns={ 'norm_electric':'norm_usage'}), ids[0])
+        water_df = proc_df(df[['user_id', 'norm_water']].copy().rename(columns={ 'norm_water':'norm_usage'}), ids[1])
+        gas_df = proc_df(df[['user_id', 'norm_gas']].copy().rename(columns={ 'norm_gas':'norm_usage'}), ids[2])
+        total_df = proc_df(df[['user_id', 'norm_total']].copy().rename(columns={ 'norm_total':'norm_usage'}), ids[3])
+
         # Concat results
-        proc_df = (pd.concat([electric_df, water_df, gas_df, total_df]))
-        proc_df["id"] = [uuid.uuid4() for _ in range(len(proc_df.index))]
+        ulb_df = (concat([electric_df, water_df, gas_df, total_df]))
+        ulb_df["id"] = [uuid.uuid4() for _ in range(len(ulb_df.index))]
 
         # Process date
-        current_datetime = datetime.now()
-        proc_df["date_created"] = current_datetime
-        proc_df["last_updated"] = current_datetime
+        current_datetime = datetime.now().replace(tzinfo=timezone(timedelta(hours=8)))
+        ulb_df["date_created"] = current_datetime
+        ulb_df["last_updated"] = current_datetime
 
-        logger.info(f"Process UserLeaderboard DF {proc_df.shape}:")
-        logger.info(proc_df.head())
-        return proc_df
+        logger.info(f"Process UserLeaderboard DF {ulb_df.shape}:")
+        logger.info(ulb_df.head())
+        return ulb_df
 
     except Exception as e:
         logger.error("Data process error: " + str(e))
         raise ValueError()
+
+@task
+def load_df(df, tbl_name):
+    try:
+        logger = get_run_logger()
+        rds_engine = create_engine(Secret.load("saven-rds").get())
+        conn = rds_engine.connect()
+        rows_imported = df.to_sql(
+            name=tbl_name,
+            con=conn,
+            schema="public",
+            if_exists='append',
+            index=False)
+
+        logger.info(f"Imported {rows_imported} rows into bills")
+
+    except Exception as e:
+        logger.error("Data extract error: " + str(e))
+        raise ValueError()
+    finally:
+        if conn:
+            conn.close()
