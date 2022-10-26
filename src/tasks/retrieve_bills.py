@@ -5,7 +5,7 @@ from prefect import task, get_run_logger
 from prefect.blocks.system import Secret
 from sqlalchemy import create_engine
 from pandas import read_sql
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import uuid
 
 @task(name="Extract Users")
@@ -47,7 +47,7 @@ def process_bills(df):
         df["total_cost"] = df["electricity_cost"] + df["gas_cost"] + df["water_cost"]
 
         # Process date
-        current_datetime = datetime.now()
+        current_datetime = datetime.now().replace(tzinfo=timezone(timedelta(hours=8)))
         prev_hour = current_datetime.replace(microsecond=0, second=0, minute=0) - timedelta(hours=1)
 
         df["stored_date_time"] = prev_hour
