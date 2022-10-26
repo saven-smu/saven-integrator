@@ -1,5 +1,5 @@
 .env
 **/__pycache__
-*deployment.yaml
+**/deployment.yaml
 README.md
 Dockerfile

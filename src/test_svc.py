@@ -35,10 +35,11 @@ def print_version(version):
     # load current saven version
     get_run_logger().info(f"Running Saven-Integrator {version}")
 
-@flow(name="Test Flow")
-def test_flow(version):
+@flow(name="Test Services")
+def test_svc(version):
     print_version(version)
     test_db()
 
 if __name__ == "__main__":
-    test_flow("v0.0.1")
+    test_svc("v0.0.3")
+    pass
