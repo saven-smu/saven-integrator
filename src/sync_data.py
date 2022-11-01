@@ -1,5 +1,5 @@
 from tasks.retrieve_bills import extract_users, process_bills, load_bills
-from tasks.compute_leaderboard import extract_bills, process_leaderboard, process_userleaderboard, load_df
+from tasks.compute_leaderboard import *
 
 from prefect import flow
 
