@@ -18,6 +18,8 @@ def extract_users():
 
         logger.info(f"Extracted User DF {df.shape}:" )
         logger.info(df.head())
+
+        df.drop(df[df['housing_type'] == 'AVG'].index, inplace=True)
         return df
     except Exception as e:
         logger.error("Data extract error: " + str(e))
@@ -31,14 +33,23 @@ def process_bills(df):
     try: 
         logger = get_run_logger()
 
-        # Generate and rename id
-        df["id"] = [uuid.uuid4() for _ in range(len(df.index))]
-
         # Process usage data with hourly multiplier
-        hm = hour_dict[datetime.now().hour]
-        df["electricity_used"] = df.apply(lambda row: calc_usage(row, 1) * hm, axis=1).astype('int')
-        df["gas_used"] = df.apply(lambda row: calc_usage(row, 2) * hm, axis=1).astype('int')
-        df["water_used"] = df.apply(lambda row: calc_usage(row, 3) * hm, axis=1).astype('int')
+        hour = datetime.now().hour
+        df["electricity_used"] = df.apply(lambda row: calc_usage(row, 1, hour), axis=1).astype('int')
+        df["gas_used"] = df.apply(lambda row: calc_usage(row, 2, hour), axis=1).astype('int')
+        df["water_used"] = df.apply(lambda row: calc_usage(row, 3, hour), axis=1).astype('int')
+
+        # Remove housing_type and household_members
+        df.drop(['housing_type', 'household_members'], axis=1, inplace=True)
+
+        # Insert for average user
+        avg_user = ['2c7778a3-eb59-4403-9046-600d3e0725c3', df["electricity_used"].mean(), df["gas_used"].mean(), df["water_used"].mean()]
+        df.loc[-1] = avg_user
+        df.index = df.index + 1
+        df = df.sort_index()
+
+        # Generate id
+        df["id"] = [uuid.uuid4() for _ in range(len(df.index))]
 
         # Process cost data
         df["electricity_cost"] = (df["electricity_used"] * 2.2).astype('int')
@@ -54,11 +65,8 @@ def process_bills(df):
         df["date_created"] = current_datetime
         df["last_updated"] = current_datetime
 
-        # Remove housing_type and household_members
-        df.drop(['housing_type', 'household_members'], axis=1, inplace=True)
-
         logger.info(f"Process Bill DF {df.shape}:")
-        logger.info(df.head())
+        logger.info(df.head(20))
         return df
 
     except Exception as e:

@@ -32,31 +32,36 @@ abm_dict = {
 
 # Range of hourly multiplier
 hour_dict = {
-    0: 0.25,
-    1: 0.1,
-    2: 0.05,
-    3: 0.05,
-    4: 0.1,
-    5: 0.25,
-    6: 0.85,
-    7: 1,
-    8: 1.1,
-    9: 1,
-    10: 0.85,
-    11: 0.8,
-    12: 0.75,
-    13: 0.7,
-    14: 0.65,
-    15: 0.5,
-    16: 0.65,
-    17: 0.75,
-    18: 0.85,
-    19: 1,
-    20: 1.1,
-    21: 1.1,
-    22: 1,
-    23: 0.65,
+    0: (0, 0.25),
+    1: (0, 0.1),
+    2: (0, 0.05),
+    3: (0, 0.05),
+    4: (0, 0.1),
+    5: (0, 0.25),
+    6: (0.1, 0.85),
+    7: (0.6, 1),
+    8: (1, 1.5),
+    9: (1, 1.5),
+    10: (0.75, 1),
+    11: (0.25, 0.5),
+    12: (0.4, 0.7),
+    13: (0.3, 0.6),
+    14: (0.25, 0.5),
+    15: (0.15, 0.4),
+    16: (0.25, 0.5),
+    17: (0.55, 0.75, ),
+    18: (0.8, 0.9),
+    19: (0.9, 1.1),
+    20: (1, 1.2),
+    21: (1.1, 1.2),
+    22: (0.8, 1),
+    23: (0.5, 0.65),
 }
+
+# Hourly Multiplier
+def hr_multiplier(hour):
+    multi_rg = hour_dict[hour]
+    return uniform(multi_rg[0], multi_rg[1])
 
 # Housing type Multiplier
 def ht_multiplier(housing_type):
@@ -76,6 +81,6 @@ def ab_multiplier():
     return uniform(multi_rg[0], multi_rg[1])
 
 # Calculate usage
-def calc_usage(row, type):
+def calc_usage(row, type, hour):
     base = usage_dict[type]
-    return int(base * ht_multiplier(row['housing_type']) * hm_multiplier(row['household_members']) * ab_multiplier())
+    return int(base * ht_multiplier(row['housing_type']) * hm_multiplier(row['household_members']) * ab_multiplier() * hr_multiplier(hour))
