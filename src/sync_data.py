@@ -15,15 +15,19 @@ def retrieve_bills():
 @flow(name="Compute Leaderboard")
 def compute_leaderboard(time_window):
     # Extract bills from database
-    bill_res = extract_bills(time_window)
+    (bdf, sdt) = extract_bills(time_window)
+    # Extract user credits from database
+    user_cred_df = extract_user_creds()
     # Process leaderboard for given user
-    lb_res = process_leaderboard(time_window, bill_res[1])
+    (ldf, ids) = process_leaderboard(time_window, sdt)
     # Load leaderboard into database
-    load_df(lb_res[0], "leaderboards")
+    load_df(ldf, "leaderboards")
     # Process user leaderboard for given user 
-    ulb_df = process_userleaderboard(bill_res[0], lb_res[1])
+    (ulb_df, tot_df) = process_userleaderboard(bdf, ids)
     # Load user leaderboard into database
     load_df(ulb_df, "userleaderboards")
+    # Reward user credits
+    reward_credits(tot_df, user_cred_df)
 
 if __name__ == "__main__":
     # Test Flows
