@@ -19,7 +19,6 @@ def extract_users():
         logger.info(f"Extracted User DF {df.shape}:" )
         logger.info(df.head())
 
-        df.drop(df[df['housing_type'] == 'AVG'].index, inplace=True)
         return df
     except Exception as e:
         logger.error("Data extract error: " + str(e))
@@ -34,7 +33,7 @@ def process_bills(df):
         logger = get_run_logger()
 
         # Process usage data with hourly multiplier
-        hour = datetime.now().hour
+        hour = (datetime.now(timezone.utc) + timedelta(hours=8)).hour
         df["electricity_used"] = df.apply(lambda row: calc_usage(row, 1, hour), axis=1).astype('int')
         df["gas_used"] = df.apply(lambda row: calc_usage(row, 2, hour), axis=1).astype('int')
         df["water_used"] = df.apply(lambda row: calc_usage(row, 3, hour), axis=1).astype('int')
@@ -58,9 +57,10 @@ def process_bills(df):
         df["total_cost"] = df["electricity_cost"] + df["gas_cost"] + df["water_cost"]
 
         # Process date
-        current_datetime = datetime.now().replace(tzinfo=timezone(timedelta(hours=8)))
+        current_datetime = (datetime.now(timezone.utc) + timedelta(hours=8)).replace(tzinfo=timezone(timedelta(hours=8)))
         prev_hour = current_datetime.replace(microsecond=0, second=0, minute=0) - timedelta(hours=1)
 
+        logger.info(f"Actual SDT: {prev_hour}")
         df["stored_date_time"] = prev_hour
         df["date_created"] = current_datetime
         df["last_updated"] = current_datetime
