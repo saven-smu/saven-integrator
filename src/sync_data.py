@@ -1,4 +1,5 @@
 from tasks.retrieve_bills import extract_users, process_bills, load_bills
+from tasks.prefetch_data import extract_single_user, process_single_bills, drop_user_bills
 from tasks.compute_leaderboard import *
 
 from prefect import flow
@@ -29,8 +30,20 @@ def compute_leaderboard(time_window):
     # Reward user credits
     reward_credits(tot_df, user_cred_df)
 
+@flow(name="Prefetch Data")
+def prefetch_bills(acct_id):
+    # Drop user bills by ID
+    drop_user_bills(acct_id)
+    # Extract user details
+    df = extract_single_user(acct_id)
+    # Process user bills for last 24 hours
+    proc_df = process_single_bills(df)
+    # Load bills into database
+    load_bills(proc_df)
+
 if __name__ == "__main__":
     # Test Flows
     # retrieve_bills()
-    compute_leaderboard(1)
+    # compute_leaderboard(1)
+    # prefetch_bills('6e48502a-3e50-4818-ac49-702e1ca554aa')
     pass
