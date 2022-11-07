@@ -6,6 +6,11 @@ users = {
         FROM USERS
         WHERE id  != '2c7778a3-eb59-4403-9046-600d3e0725c3';
     """,
+    "get_user_id": """
+        SELECT id as user_id, housing_type, household_members
+        FROM USERS
+        WHERE id  = '{0}';
+    """,
     "get_users_credits": """
         SELECT id as user_id, credits
         FROM USERS
@@ -20,13 +25,17 @@ users = {
 
 bills = {
     "get_bills": """
-        SELECT usr.id as user_id, usr.housing_type, usr.household_members, sum(bil.electricity_used) as total_electric, sum(bil.water_used) as total_water, sum(bil.gas_used) as total_gas
+        SELECT usr.id as user_id, usr.housing_type, usr.household_members, avg(bil.electricity_used) as total_electric, avg(bil.water_used) as total_water, avg(bil.gas_used) as total_gas
         FROM BILLS as bil
         INNER JOIN USERS as usr
         ON usr.id = bil.user_id
         WHERE bil.stored_date_time >= '{0}' AND bil.stored_date_time < '{1}'
         AND usr.id  != '2c7778a3-eb59-4403-9046-600d3e0725c3'
         GROUP BY usr.id, usr.housing_type, usr.household_members;
+    """,
+    "delete_bills_id": """
+        DELETE FROM BILLS
+        WHERE user_id  = '{0}';
     """
 }
 
